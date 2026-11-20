@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GTA VI Trophy Guide &amp; Tracker — 55 trophies, one playthrough</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div>
+    <p class="kicker">Grand Theft Auto VI · PlayStation 5 · Offline guide</p>
+    <h1>GTA VI Trophy Guide &amp; Tracker</h1>
+    <p class="sub">All 55 trophies — 1 platinum, 2 gold, 6 silver, 46 bronze. All offline, no online trophies, one playthrough is enough. About 200 hours to the platinum.</p>
+  </div>
+  <div class="progress" id="progressBox" aria-label="Progress">
+    <div class="big" id="progressCount">0 / 55</div>
+    <div class="bar"><div id="progressBar"></div></div>
+    <p id="progressText">0 earned · 0% · Platinum 0/1 · Gold 0/2 · Silver 0/6 · Bronze 0/46</p>
+    <p class="small">Progress is saved in this browser only.</p>
+  </div>
+</header>
+
+<section class="roadmap" aria-label="Roadmap to the platinum">
+  <h2>Roadmap to the platinum — Vice Got a Price!</h2>
+  <ol class="stages">
+    <li><strong>Stage 1 — Story, 60–80 hours.</strong> Play Chapters 1–5 in order. Manual save at the start of each chapter: there is no mission replay. <em>Do the Lucia balcony meditation in Chapter 1, after Down to Earth, before the chapter ends — the only possibly missable trophy.</em></li>
+    <li><strong>Stage 2 — During the story.</strong> Try all 9 activity types, scan vehicles and landmarks with WAiNK, and start stranger strands as they appear. Trophy-related quest givers return later if they go quiet.</li>
+    <li><strong>Stage 3 — After the story, free roam.</strong> Open Progress &gt; Stats &gt; 100% Completion and work it: 39 gang operations, 22 bank jobs, 7 payday loan jobs, 8 bank vaults, 100 optional tasks, and the collectibles.</li>
+    <li><strong>Stage 4 — Clean-up.</strong> Finish the 8 stranger strands, the count trophies (250 stunts, 42 shooting-range golds, 100 WAiNK, 50 challenges), then the platinum pops.</li>
+  </ol>
+  <p class="missable"><strong>⚠ Only 1 possibly missable:</strong> Positive Mental Attitude — meditate at every spot. The Chapter 1 balcony meditation with Lucia may disappear after Chapter 1, and it is unconfirmed whether it counts, so do it to be safe. Every other trophy can be earned in free roam after the story.</p>
+</section>
+
+<div class="controls" role="search">
+  <label>Search <input id="search" type="search" placeholder="Trophy, mission, or activity…"></label>
+  <label>Kind <select id="kind"><option value="all">All kinds</option><option value="story">Story</option><option value="missable">Missable</option><option value="collectibles">Collectibles</option><option value="activities">Activities</option><option value="crime">Crime</option><option value="side">Side &amp; strangers</option><option value="exploration">Exploration</option><option value="money">Money</option><option value="platinum">Platinum</option></select></label>
+  <label>Grade <select id="grade"><option value="all">All grades</option><option value="platinum">Platinum</option><option value="gold">Gold</option><option value="silver">Silver</option><option value="bronze">Bronze</option></select></label>
+  <label>Show <select id="earnedFilter"><option value="all">All trophies</option><option value="todo">Not earned yet</option><option value="earned">Earned only</option></select></label>
+  <label class="check"><input id="spoilers" type="checkbox"> Show story spoilers</label>
+  <button id="export" type="button">Export progress</button>
+  <label class="import">Import progress <input id="import" type="file" accept="application/json,.json"></label>
+  <button id="reset" type="button">Reset</button>
+</div>
+<p class="hint" id="resultCount"></p>
+
+<main class="layout">
+  <section class="list" id="list" aria-label="Trophy list"></section>
+  <aside class="detail" id="detail" aria-label="Selected trophy guide">
+    <p class="detailEmpty">Select a trophy to read its guide and its source.</p>
+  </aside>
+</main>
+
+<footer>
+  <p>Sources: trophy names, descriptions and grades are as PlayStation publishes them, as listed by Exophase. Each guide names its source beside it — PowerPyx, KeenGamer, GTAScoop / Output Lag, or PSNProfiles for PSN counts — and where a step is not pinned down, the guide says so. This guide is written for this entry, in its own words; it copies no other guide's text. No Rockstar logo or official artwork is used. The app works offline and makes no network requests.</p>
+  <p class="small">Online trophies: none. The filter list shows “Online” with 0 trophies, because the official list has none.</p>
+</footer>
+<script type="module" src="app.js"></script>
+</body>
+</html>
