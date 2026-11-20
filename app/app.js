@@ -1,7 +1,14 @@
-// GTA VI trophy guide and tracker v2: step-level cited guides, audit strip and
-// source matrix, checklist in localStorage, export/import, kind, grade and
-// status filters, search, and a spoiler setting for story trophies. The audit
-// strip is computed live from trophies.json, so its numbers always match the data.
+// GTA VI trophy guide and tracker v3, market-style: step-level cited guides,
+// audit strip and source matrix, checklist in localStorage, export/import,
+// kind, grade and status filters, search, and a spoiler setting for story
+// trophies. Each trophy is shown like a market card: a big earn-chance %,
+// a YES / NO resolve button, and an odds bar. The % is this guide's own
+// estimate from the trophy's difficulty (1-5) and time, not a real market
+// and not live odds: difficulty 1 -> 95%, 2 -> 85%, 3 -> 70%, 4 -> 55%,
+// 5 -> 40%, lowered 10 points for disputed and 20 for unconfirmed trophies.
+// YES marks the trophy earned; NO marks it not earned yet. The audit strip
+// is computed live from trophies.json, so its numbers always match the data.
+// Local storage key stays gta6-trophy-guide-v2 so v2 progress is kept.
 const STORAGE_KEY = 'gta6-trophy-guide-v2';
 const listEl = document.getElementById('list');
 const detailEl = document.getElementById('detail');
@@ -29,6 +36,11 @@ function displayName(t) { return isHidden(t) ? 'Hidden story trophy' : t.name; }
 function displayDescription(t) { return isHidden(t) ? 'Hidden until earned — turn “Show story spoilers” on, or earn it.' : t.description; }
 function stepCount(t) { return (t.steps ?? []).length; }
 function backedCount(t) { return (t.steps ?? []).filter((s) => (s.s ?? []).length >= 2).length; }
+function earnChance(t) {
+  const base = { 1: 95, 2: 85, 3: 70, 4: 55, 5: 40 }[t.difficulty ?? 3] ?? 70;
+  const adj = t.status === 'disputed' ? -10 : t.status === 'unconfirmed' ? -20 : 0;
+  return Math.max(5, Math.min(99, base + adj));
+}
 
 function renderAudit() {
   const totalSteps = trophies.reduce((n, t) => n + stepCount(t), 0);
@@ -40,8 +52,8 @@ function renderAudit() {
   grid.replaceChildren();
   const cells = [
     [`${totalSteps}`, 'cited steps in total'],
-    [`${backed}`, 'steps backed by 2+ sources'],
-    [`${verified} / 55`, 'trophies verified'],
+    [`${backed} · ${totalSteps ? Math.round((backed / totalSteps) * 100) : 0}%`, 'steps backed by 2+ sources'],
+    [`${verified} / 55 · ${Math.round((verified / 55) * 100)}%`, 'trophies verified'],
     [`${disputed}`, 'trophies disputed'],
     [`${unconfirmed}`, 'trophies unconfirmed'],
     [`${sourceList.length}`, 'named sources, dated'],
@@ -100,6 +112,14 @@ function visibleTrophies() {
   });
 }
 
+function setEarned(t, value) {
+  if (value) earned.add(t.name); else earned.delete(t.name);
+  saveEarned();
+  updateProgress();
+  renderList();
+  renderDetail(t);
+}
+
 function renderList() {
   const shown = visibleTrophies();
   document.getElementById('resultCount').textContent =
@@ -114,9 +134,20 @@ function renderList() {
     const desc = document.createElement('p');
     desc.className = 'desc';
     desc.textContent = displayDescription(t);
+    const odds = document.createElement('div');
+    odds.className = 'odds';
+    const bar = document.createElement('div');
+    bar.className = 'oddsBar';
+    const fill = document.createElement('div');
+    fill.style.width = `${earnChance(t)}%`;
+    bar.append(fill);
+    const pct = document.createElement('div');
+    pct.className = 'oddsPct' + (earnChance(t) < 60 ? ' low' : '');
+    pct.textContent = `${earnChance(t)}%`;
+    odds.append(bar, pct);
     const meta = document.createElement('div');
     meta.className = 'meta';
-    for (const [label, cls] of [[t.grade, `pill grade-${t.grade}`], [t.kind, 'pill'], [t.count != null ? `×${t.count}` : null, 'pill'], [t.status, `pill status-${t.status}`], [`${stepCount(t)} steps`, 'pill'], [`${backedCount(t)} backed by 2+`, 'pill']]) {
+    for (const [label, cls] of [[t.grade, `pill grade-${t.grade}`], [t.kind === t.grade ? null : t.kind, 'pill'], [t.count != null ? `×${t.count}` : null, 'pill'], [t.status, `pill status-${t.status}`], [`${stepCount(t)} steps`, 'pill'], [`${backedCount(t)} backed by 2+`, 'pill']]) {
       if (!label) continue;
       const pill = document.createElement('span');
       pill.className = cls;
@@ -129,7 +160,20 @@ function renderList() {
       pill.textContent = '⚠ Possibly missable';
       meta.append(pill);
     }
-    card.append(title, desc, meta);
+    const yn = document.createElement('div');
+    yn.className = 'yn';
+    const yes = document.createElement('button');
+    yes.type = 'button';
+    yes.className = 'yes' + (earned.has(t.name) ? ' on' : '');
+    yes.textContent = earned.has(t.name) ? 'Yes ✓ earned' : 'Yes — earned it';
+    yes.addEventListener('click', (e) => { e.stopPropagation(); setEarned(t, true); });
+    const no = document.createElement('button');
+    no.type = 'button';
+    no.className = 'no' + (!earned.has(t.name) ? ' on' : '');
+    no.textContent = 'No — not yet';
+    no.addEventListener('click', (e) => { e.stopPropagation(); setEarned(t, false); });
+    yn.append(yes, no);
+    card.append(title, desc, odds, meta, yn);
     card.addEventListener('click', () => selectTrophy(t));
     card.addEventListener('keydown', (e) => { if (e.key === 'Enter') selectTrophy(t); });
     listEl.append(card);
@@ -155,19 +199,45 @@ function renderDetail(t) {
   const desc = document.createElement('p');
   desc.className = 'desc';
   desc.textContent = `${t.grade} · ${t.kind}${t.count != null ? ` · count ${t.count}` : ''} · ${t.status} · ${stepCount(t)} cited steps, ${backedCount(t)} backed by 2+ sources — ${displayDescription(t)}`;
-  const label = document.createElement('label');
-  const box = document.createElement('input');
-  box.type = 'checkbox';
-  box.checked = earned.has(t.name);
-  box.addEventListener('change', () => {
-    if (box.checked) earned.add(t.name); else earned.delete(t.name);
-    saveEarned();
-    updateProgress();
-    renderList();
-    renderDetail(t);
-  });
-  label.append(box, document.createTextNode(earned.has(t.name) ? 'Earned — ticked' : 'Mark as earned'));
-  detailEl.append(title, desc, label);
+  const odds = document.createElement('div');
+  odds.className = 'odds';
+  const bar = document.createElement('div');
+  bar.className = 'oddsBar';
+  const fill = document.createElement('div');
+  fill.style.width = `${earnChance(t)}%`;
+  bar.append(fill);
+  const pct = document.createElement('div');
+  pct.className = 'oddsPct' + (earnChance(t) < 60 ? ' low' : '');
+  pct.textContent = `${earnChance(t)}%`;
+  odds.append(bar, pct);
+  const oddsNote = document.createElement('p');
+  oddsNote.className = 'small';
+  oddsNote.textContent = 'Earn chance: this guide’s own estimate from difficulty and time, not a real market.';
+  const table = document.createElement('table');
+  table.className = 'oddsTable';
+  for (const [k, v] of [['Difficulty', `${t.difficulty ?? '—'} / 5`], ['Time', t.time ?? '—'], ['Count', t.count != null ? String(t.count) : '—'], ['Status', t.status], ['Cited steps', `${stepCount(t)} (${backedCount(t)} backed by 2+)`]]) {
+    const tr = document.createElement('tr');
+    const a = document.createElement('td');
+    a.textContent = k;
+    const b = document.createElement('td');
+    b.textContent = v;
+    tr.append(a, b);
+    table.append(tr);
+  }
+  const yn = document.createElement('div');
+  yn.className = 'yn';
+  const yes = document.createElement('button');
+  yes.type = 'button';
+  yes.className = 'yes' + (earned.has(t.name) ? ' on' : '');
+  yes.textContent = earned.has(t.name) ? 'Yes ✓ earned' : 'Yes — earned it';
+  yes.addEventListener('click', () => setEarned(t, true));
+  const no = document.createElement('button');
+  no.type = 'button';
+  no.className = 'no' + (!earned.has(t.name) ? ' on' : '');
+  no.textContent = 'No — not yet';
+  no.addEventListener('click', () => setEarned(t, false));
+  yn.append(yes, no);
+  detailEl.append(title, desc, odds, oddsNote, table, yn);
   if (isHidden(t)) {
     const p = document.createElement('p');
     p.className = 'guide';
